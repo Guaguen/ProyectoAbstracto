@@ -1,0 +1,673 @@
+==================================================================
+ AGUAALERTA API - 3er PARCIAL
+ INSTRUCCIONES PARA EL COMPAÑERO (Colonias, Depositos, Reportes, README)
+ Entrega: sabado 14 de noviembre de 2026 antes de las 12:00
+==================================================================
+
+REPARTO
+-------
+Sam:        estructuras (LinkedList y Queue), Usuarios, Roles, Postman
+Companero:  Colonias, Depositos, Reportes, README
+
+IMPORTANTE ANTES DE EMPEZAR
+---------------------------
+- Espera a que se haga merge de la rama feature/estructuras (de Sam) en develop.
+  Tus services usan LinkedList y Queue del paquete structures.
+- Los datos van EN MEMORIA, no en la base de datos.
+  NO uses @Entity, JpaRepository ni la carpeta repositories.
+- El paquete base es: com.example.proyectobd2
+
+
+==================================================================
+ REGLAS PARA NO PERDER PUNTOS
+==================================================================
+- Ramas: solo feature/..., fix/... o docs/...   (NO "feat/...")      -0.3 c/u
+- Commits: "tipo: descripcion"  ej. feat: agrega modulo de colonias  -0.3 c/u
+- NUNCA hacer commit directo a main (-1) ni a develop (-0.5)
+- Cada PR: titulo con la convencion + descripcion + al menos un label
+  (feature, fix o docs) + aprobacion del otro integrante antes del merge
+- Minimo 3 PRs por alumno y commits en 3 dias diferentes
+  (recomendado: 2 PRs hoy y el README manana temprano)
+
+
+==================================================================
+ FLUJO DE GIT (se repite por cada modulo)
+==================================================================
+
+1) Actualizar develop y crear tu rama:
+
+   git checkout develop
+   git pull
+   git checkout -b feature/modulo-colonias
+
+2) Crear los archivos del modulo en IntelliJ y guardarlos (Ctrl + S).
+
+3) Subir:
+
+   git add .
+   git commit -m "feat: agrega modulo de colonias"
+   git push -u origin feature/modulo-colonias
+
+4) En GitHub abrir el Pull Request:
+   - base: develop   <-   compare: feature/modulo-colonias
+   - Titulo: feat: agrega modulo de colonias
+   - Descripcion: Se agrega el modulo de colonias con model, DTO,
+     service (datos en memoria con LinkedList y 3 registros de
+     ejemplo) y controller con GET lista, GET por id y POST.
+   - Label: feature
+   - Reviewer: Sam (el aprueba y hace merge)
+
+5) Repetir con:
+   feature/modulo-depositos   ->  "feat: agrega modulo de depositos"
+   feature/modulo-reportes    ->  "feat: agrega modulo de reportes con cola de pendientes"
+   docs/readme                ->  "docs: agrega README del proyecto"   (label: docs)
+
+Si necesitas traer lo nuevo de develop a tu rama:
+
+   git checkout tu-rama
+   git pull origin develop
+
+(si se abre Vim pidiendo mensaje de merge: escribe :wq y Enter)
+
+
+==================================================================
+ MODULO 1: COLONIAS     rama: feature/modulo-colonias
+==================================================================
+
+---------- models/Colonia.java ----------
+
+package com.example.proyectobd2.models;
+
+public class Colonia {
+    private Long id;
+    private String nombreColonia;
+    private String municipio;
+    private String codigoPostal;
+    private String descripcion;
+    private Double latitud;
+    private Double longitud;
+    private String estado;
+
+    public Colonia(Long id, String nombreColonia, String municipio, String codigoPostal,
+                   String descripcion, Double latitud, Double longitud, String estado) {
+        this.id = id;
+        this.nombreColonia = nombreColonia;
+        this.municipio = municipio;
+        this.codigoPostal = codigoPostal;
+        this.descripcion = descripcion;
+        this.latitud = latitud;
+        this.longitud = longitud;
+        this.estado = estado;
+    }
+
+    public Long getId() { return id; }
+    public String getNombreColonia() { return nombreColonia; }
+    public String getMunicipio() { return municipio; }
+    public String getCodigoPostal() { return codigoPostal; }
+    public String getDescripcion() { return descripcion; }
+    public Double getLatitud() { return latitud; }
+    public Double getLongitud() { return longitud; }
+    public String getEstado() { return estado; }
+}
+
+---------- dto/CreateColoniaRequest.java ----------
+
+package com.example.proyectobd2.dto;
+
+public record CreateColoniaRequest(
+        String nombreColonia,
+        String municipio,
+        String codigoPostal,
+        String descripcion,
+        Double latitud,
+        Double longitud,
+        String estado
+) {}
+
+---------- services/ColoniaService.java ----------
+
+package com.example.proyectobd2.services;
+
+import com.example.proyectobd2.dto.CreateColoniaRequest;
+import com.example.proyectobd2.models.Colonia;
+import com.example.proyectobd2.structures.LinkedList;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class ColoniaService {
+
+    private final LinkedList<Colonia> colonias = new LinkedList<>();
+    private Long siguienteId = 1L;
+
+    public ColoniaService() {
+        colonias.add(new Colonia(siguienteId++, "Centro", "Puebla", "72000",
+                "Zona centro con red antigua", 19.0414, -98.2063, "activa"));
+        colonias.add(new Colonia(siguienteId++, "La Paz", "Puebla", "72160",
+                "Zona residencial con baja presion", 19.0560, -98.2290, "activa"));
+        colonias.add(new Colonia(siguienteId++, "San Manuel", "Puebla", "72570",
+                "Zona universitaria con cortes frecuentes", 19.0030, -98.1990, "activa"));
+    }
+
+    public List<Colonia> obtenerTodas() {
+        return colonias.toList();
+    }
+
+    public Colonia obtenerPorId(Long id) {
+        return colonias.find(c -> c.getId().equals(id));
+    }
+
+    public Colonia crear(CreateColoniaRequest request) {
+        Colonia colonia = new Colonia(siguienteId++, request.nombreColonia(), request.municipio(),
+                request.codigoPostal(), request.descripcion(), request.latitud(),
+                request.longitud(), request.estado());
+        colonias.add(colonia);
+        return colonia;
+    }
+}
+
+---------- controllers/ColoniaController.java ----------
+
+package com.example.proyectobd2.controllers;
+
+import com.example.proyectobd2.dto.CreateColoniaRequest;
+import com.example.proyectobd2.models.Colonia;
+import com.example.proyectobd2.services.ColoniaService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/colonias")
+public class ColoniaController {
+
+    private final ColoniaService coloniaService;
+
+    public ColoniaController(ColoniaService coloniaService) {
+        this.coloniaService = coloniaService;
+    }
+
+    @GetMapping
+    public List<Colonia> obtenerTodas() {
+        return coloniaService.obtenerTodas();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Colonia> obtenerPorId(@PathVariable Long id) {
+        Colonia colonia = coloniaService.obtenerPorId(id);
+        if (colonia == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(colonia);
+    }
+
+    @PostMapping
+    public ResponseEntity<Colonia> crear(@RequestBody CreateColoniaRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(coloniaService.crear(request));
+    }
+}
+
+
+==================================================================
+ MODULO 2: DEPOSITOS     rama: feature/modulo-depositos
+==================================================================
+
+---------- models/Deposito.java ----------
+
+package com.example.proyectobd2.models;
+
+import java.time.LocalDate;
+
+public class Deposito {
+    private Long id;
+    private String nombreDeposito;
+    private Double capacidadLitros;
+    private Double nivelActualLitros;
+    private String tipoDeposito;
+    private String ubicacion;
+    private LocalDate fechaInstalacion;
+    private String estado;
+    private Long coloniaId;
+
+    public Deposito(Long id, String nombreDeposito, Double capacidadLitros, Double nivelActualLitros,
+                    String tipoDeposito, String ubicacion, LocalDate fechaInstalacion,
+                    String estado, Long coloniaId) {
+        this.id = id;
+        this.nombreDeposito = nombreDeposito;
+        this.capacidadLitros = capacidadLitros;
+        this.nivelActualLitros = nivelActualLitros;
+        this.tipoDeposito = tipoDeposito;
+        this.ubicacion = ubicacion;
+        this.fechaInstalacion = fechaInstalacion;
+        this.estado = estado;
+        this.coloniaId = coloniaId;
+    }
+
+    public Long getId() { return id; }
+    public String getNombreDeposito() { return nombreDeposito; }
+    public Double getCapacidadLitros() { return capacidadLitros; }
+    public Double getNivelActualLitros() { return nivelActualLitros; }
+    public String getTipoDeposito() { return tipoDeposito; }
+    public String getUbicacion() { return ubicacion; }
+    public LocalDate getFechaInstalacion() { return fechaInstalacion; }
+    public String getEstado() { return estado; }
+    public Long getColoniaId() { return coloniaId; }
+}
+
+---------- dto/CreateDepositoRequest.java ----------
+
+package com.example.proyectobd2.dto;
+
+import java.time.LocalDate;
+
+public record CreateDepositoRequest(
+        String nombreDeposito,
+        Double capacidadLitros,
+        Double nivelActualLitros,
+        String tipoDeposito,
+        String ubicacion,
+        LocalDate fechaInstalacion,
+        String estado,
+        Long coloniaId
+) {}
+
+---------- services/DepositoService.java ----------
+
+package com.example.proyectobd2.services;
+
+import com.example.proyectobd2.dto.CreateDepositoRequest;
+import com.example.proyectobd2.models.Deposito;
+import com.example.proyectobd2.structures.LinkedList;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@Service
+public class DepositoService {
+
+    private final LinkedList<Deposito> depositos = new LinkedList<>();
+    private Long siguienteId = 1L;
+
+    public DepositoService() {
+        depositos.add(new Deposito(siguienteId++, "Tanque Centro", 50000.0, 32000.0,
+                "Tanque elevado", "Calle 5 de Mayo", LocalDate.of(2020, 3, 15), "operando", 1L));
+        depositos.add(new Deposito(siguienteId++, "Cisterna La Paz", 30000.0, 5000.0,
+                "Cisterna", "Av. Juarez", LocalDate.of(2019, 8, 1), "nivel bajo", 2L));
+        depositos.add(new Deposito(siguienteId++, "Tanque San Manuel", 40000.0, 28000.0,
+                "Tanque superficial", "Av. San Claudio", LocalDate.of(2021, 1, 20), "operando", 3L));
+    }
+
+    public List<Deposito> obtenerTodos() {
+        return depositos.toList();
+    }
+
+    public Deposito obtenerPorId(Long id) {
+        return depositos.find(d -> d.getId().equals(id));
+    }
+
+    public Deposito crear(CreateDepositoRequest request) {
+        Deposito deposito = new Deposito(siguienteId++, request.nombreDeposito(),
+                request.capacidadLitros(), request.nivelActualLitros(), request.tipoDeposito(),
+                request.ubicacion(), request.fechaInstalacion(), request.estado(), request.coloniaId());
+        depositos.add(deposito);
+        return deposito;
+    }
+}
+
+---------- controllers/DepositoController.java ----------
+
+package com.example.proyectobd2.controllers;
+
+import com.example.proyectobd2.dto.CreateDepositoRequest;
+import com.example.proyectobd2.models.Deposito;
+import com.example.proyectobd2.services.DepositoService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/depositos")
+public class DepositoController {
+
+    private final DepositoService depositoService;
+
+    public DepositoController(DepositoService depositoService) {
+        this.depositoService = depositoService;
+    }
+
+    @GetMapping
+    public List<Deposito> obtenerTodos() {
+        return depositoService.obtenerTodos();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Deposito> obtenerPorId(@PathVariable Long id) {
+        Deposito deposito = depositoService.obtenerPorId(id);
+        if (deposito == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(deposito);
+    }
+
+    @PostMapping
+    public ResponseEntity<Deposito> crear(@RequestBody CreateDepositoRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(depositoService.crear(request));
+    }
+}
+
+
+==================================================================
+ MODULO 3: REPORTES (usa LinkedList + Queue)
+ rama: feature/modulo-reportes
+==================================================================
+
+Uso real de la Queue: cada reporte nuevo entra a la COLA DE PENDIENTES.
+El personal atiende los reportes en orden de llegada (FIFO) con
+POST /api/reportes/atender, que saca el reporte mas antiguo de la cola
+y le cambia el estado a "en atencion".
+
+Endpoints extra:
+  GET  /api/reportes/pendientes   -> lista la cola de pendientes
+  POST /api/reportes/atender      -> atiende el siguiente (404 si no hay)
+
+---------- models/Reporte.java ----------
+
+package com.example.proyectobd2.models;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+
+public class Reporte {
+    private Long id;
+    private String titulo;
+    private String descripcion;
+    private LocalDate fechaReporte;
+    private LocalTime horaReporte;
+    private String ubicacion;
+    private String fotografia;
+    private String nivelPrioridad;
+    private String estado;
+    private Long usuarioId;
+    private Long coloniaId;
+
+    public Reporte(Long id, String titulo, String descripcion, LocalDate fechaReporte,
+                   LocalTime horaReporte, String ubicacion, String fotografia,
+                   String nivelPrioridad, String estado, Long usuarioId, Long coloniaId) {
+        this.id = id;
+        this.titulo = titulo;
+        this.descripcion = descripcion;
+        this.fechaReporte = fechaReporte;
+        this.horaReporte = horaReporte;
+        this.ubicacion = ubicacion;
+        this.fotografia = fotografia;
+        this.nivelPrioridad = nivelPrioridad;
+        this.estado = estado;
+        this.usuarioId = usuarioId;
+        this.coloniaId = coloniaId;
+    }
+
+    public Long getId() { return id; }
+    public String getTitulo() { return titulo; }
+    public String getDescripcion() { return descripcion; }
+    public LocalDate getFechaReporte() { return fechaReporte; }
+    public LocalTime getHoraReporte() { return horaReporte; }
+    public String getUbicacion() { return ubicacion; }
+    public String getFotografia() { return fotografia; }
+    public String getNivelPrioridad() { return nivelPrioridad; }
+    public String getEstado() { return estado; }
+    public Long getUsuarioId() { return usuarioId; }
+    public Long getColoniaId() { return coloniaId; }
+
+    public void setEstado(String estado) { this.estado = estado; }
+}
+
+---------- dto/CreateReporteRequest.java ----------
+(la fecha, la hora y el estado los pone el sistema)
+
+package com.example.proyectobd2.dto;
+
+public record CreateReporteRequest(
+        String titulo,
+        String descripcion,
+        String ubicacion,
+        String fotografia,
+        String nivelPrioridad,
+        Long usuarioId,
+        Long coloniaId
+) {}
+
+---------- services/ReporteService.java ----------
+
+package com.example.proyectobd2.services;
+
+import com.example.proyectobd2.dto.CreateReporteRequest;
+import com.example.proyectobd2.models.Reporte;
+import com.example.proyectobd2.structures.LinkedList;
+import com.example.proyectobd2.structures.Queue;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+
+@Service
+public class ReporteService {
+
+    private final LinkedList<Reporte> reportes = new LinkedList<>();
+    private final Queue<Reporte> pendientes = new Queue<>();
+    private Long siguienteId = 1L;
+
+    public ReporteService() {
+        registrar(new Reporte(siguienteId++, "Fuga en calle principal",
+                "Sale agua de la banqueta desde hace dos dias",
+                LocalDate.of(2026, 11, 10), LocalTime.of(9, 30), "Calle 5 de Mayo #120",
+                "fuga1.jpg", "alta", "pendiente", 3L, 1L));
+        registrar(new Reporte(siguienteId++, "Sin agua desde ayer",
+                "No llega agua a la vivienda desde el lunes",
+                LocalDate.of(2026, 11, 11), LocalTime.of(14, 15), "Av. Juarez #45",
+                "sinagua.jpg", "media", "pendiente", 3L, 2L));
+        registrar(new Reporte(siguienteId++, "Agua turbia",
+                "El agua sale de color cafe",
+                LocalDate.of(2026, 11, 12), LocalTime.of(8, 0), "Av. San Claudio #300",
+                "turbia.jpg", "alta", "pendiente", 3L, 3L));
+    }
+
+    private void registrar(Reporte reporte) {
+        reportes.add(reporte);
+        pendientes.enqueue(reporte);
+    }
+
+    public List<Reporte> obtenerTodos() {
+        return reportes.toList();
+    }
+
+    public Reporte obtenerPorId(Long id) {
+        return reportes.find(r -> r.getId().equals(id));
+    }
+
+    public Reporte crear(CreateReporteRequest request) {
+        Reporte reporte = new Reporte(siguienteId++, request.titulo(), request.descripcion(),
+                LocalDate.now(), LocalTime.now().withNano(0), request.ubicacion(),
+                request.fotografia(), request.nivelPrioridad(), "pendiente",
+                request.usuarioId(), request.coloniaId());
+        registrar(reporte);
+        return reporte;
+    }
+
+    public List<Reporte> obtenerPendientes() {
+        return pendientes.toList();
+    }
+
+    public Reporte atenderSiguiente() {
+        Reporte reporte = pendientes.dequeue();
+        if (reporte != null) {
+            reporte.setEstado("en atencion");
+        }
+        return reporte;
+    }
+}
+
+---------- controllers/ReporteController.java ----------
+
+package com.example.proyectobd2.controllers;
+
+import com.example.proyectobd2.dto.CreateReporteRequest;
+import com.example.proyectobd2.models.Reporte;
+import com.example.proyectobd2.services.ReporteService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/reportes")
+public class ReporteController {
+
+    private final ReporteService reporteService;
+
+    public ReporteController(ReporteService reporteService) {
+        this.reporteService = reporteService;
+    }
+
+    @GetMapping
+    public List<Reporte> obtenerTodos() {
+        return reporteService.obtenerTodos();
+    }
+
+    @GetMapping("/pendientes")
+    public List<Reporte> obtenerPendientes() {
+        return reporteService.obtenerPendientes();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Reporte> obtenerPorId(@PathVariable Long id) {
+        Reporte reporte = reporteService.obtenerPorId(id);
+        if (reporte == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(reporte);
+    }
+
+    @PostMapping
+    public ResponseEntity<Reporte> crear(@RequestBody CreateReporteRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(reporteService.crear(request));
+    }
+
+    @PostMapping("/atender")
+    public ResponseEntity<Reporte> atenderSiguiente() {
+        Reporte reporte = reporteService.atenderSiguiente();
+        if (reporte == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(reporte);
+    }
+}
+
+
+==================================================================
+ JSON DE EJEMPLO PARA PROBAR EN POSTMAN (POST)
+==================================================================
+
+POST http://localhost:8080/api/colonias
+{
+  "nombreColonia": "Amalucan",
+  "municipio": "Puebla",
+  "codigoPostal": "72310",
+  "descripcion": "Zona con tuberias nuevas",
+  "latitud": 19.0650,
+  "longitud": -98.1500,
+  "estado": "activa"
+}
+
+POST http://localhost:8080/api/depositos
+{
+  "nombreDeposito": "Tanque Amalucan",
+  "capacidadLitros": 25000,
+  "nivelActualLitros": 20000,
+  "tipoDeposito": "Tanque elevado",
+  "ubicacion": "Calle Norte 10",
+  "fechaInstalacion": "2023-05-10",
+  "estado": "operando",
+  "coloniaId": 1
+}
+
+POST http://localhost:8080/api/reportes
+{
+  "titulo": "Tuberia rota",
+  "descripcion": "Se rompio la tuberia frente a la escuela",
+  "ubicacion": "Calle Sur 25",
+  "fotografia": "tuberia.jpg",
+  "nivelPrioridad": "alta",
+  "usuarioId": 1,
+  "coloniaId": 2
+}
+
+Para probar: corre ./gradlew bootRun (o el boton Run en IntelliJ) y
+revisa que:
+  - GET  /api/{modulo}       responda 200 con la lista
+  - GET  /api/{modulo}/1     responda 200, y /999 responda 404
+  - POST /api/{modulo}       responda 201 con el registro creado
+
+
+==================================================================
+ README.md     rama: docs/readme     (label: docs)
+==================================================================
+Crea README.md en la raiz del proyecto con esta plantilla y llena
+los nombres:
+
+# AguaAlerta API
+
+Sistema inteligente de monitoreo, deteccion de fugas y distribucion de
+agua potable. Permite registrar colonias, depositos de agua y reportes
+ciudadanos (fugas, falta de agua, contaminacion), y atender los reportes
+en orden de llegada. API hecha con Spring Boot; en este parcial los datos
+viven en memoria dentro de estructuras de datos propias.
+
+## Integrantes
+- Samuel Cuatzo Conde (samuuConde)
+- NOMBRE DEL COMPANERO (Guaguen)
+
+## Modulos y endpoints
+
+| Modulo   | Metodo | Ruta                      | Descripcion                          |
+|----------|--------|---------------------------|--------------------------------------|
+| Health   | GET    | /api/health               | Responde OK                          |
+| Health   | GET    | /api/health/db            | Prueba la conexion a PostgreSQL      |
+| Usuarios | GET    | /api/usuarios             | Lista de usuarios                    |
+| Usuarios | GET    | /api/usuarios/{id}        | Usuario por id (404 si no existe)    |
+| Usuarios | POST   | /api/usuarios             | Crea un usuario (201)                |
+| Roles    | GET    | /api/roles                | Lista de roles                       |
+| Roles    | GET    | /api/roles/{id}           | Rol por id                           |
+| Roles    | POST   | /api/roles                | Crea un rol (201)                    |
+| Colonias | GET    | /api/colonias             | Lista de colonias                    |
+| Colonias | GET    | /api/colonias/{id}        | Colonia por id                       |
+| Colonias | POST   | /api/colonias             | Crea una colonia (201)               |
+| Depositos| GET    | /api/depositos            | Lista de depositos                   |
+| Depositos| GET    | /api/depositos/{id}       | Deposito por id                      |
+| Depositos| POST   | /api/depositos            | Crea un deposito (201)               |
+| Reportes | GET    | /api/reportes             | Lista de reportes                    |
+| Reportes | GET    | /api/reportes/{id}        | Reporte por id                       |
+| Reportes | POST   | /api/reportes             | Crea un reporte y lo forma en la cola|
+| Reportes | GET    | /api/reportes/pendientes  | Cola de reportes pendientes          |
+| Reportes | POST   | /api/reportes/atender     | Atiende el reporte mas antiguo       |
+
+## Estructuras de datos
+- **LinkedList (propia, con nodos)** - paquete `structures`. Se usa en
+  todos los services para guardar los registros en memoria.
+- **Queue (propia, con nodos)** - paquete `structures`. Se usa en
+  `ReporteService` como cola de reportes pendientes: se atienden en
+  orden de llegada (FIFO).
+
+Ambas tienen el metodo `toList()` para poder responder en JSON.
+
+## Como correr el proyecto
+1. Clonar el repositorio.
+2. Copiar `.env.example` a `.env` y llenar las variables:
+   DB_URL, DB_USERNAME, DB_PASSWORD
+3. Correr:
+   ./gradlew bootRun
+   (en Windows: gradlew.bat bootRun)
+4. La API queda en http://localhost:8080
+
+## Postman
+La coleccion esta en la carpeta `postman/` (formato Collection v2.1),
+con la variable `baseUrl = http://localhost:8080`.
