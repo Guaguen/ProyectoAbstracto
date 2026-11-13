@@ -38,3 +38,4 @@ out/
 
 # Variables de entorno
 .env
+Claude outputs/
