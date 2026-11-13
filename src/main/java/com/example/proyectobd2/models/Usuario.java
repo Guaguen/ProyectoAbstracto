@@ -1,74 +1,38 @@
-
 package com.example.proyectobd2.models;
 
-import jakarta.persistence.*;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-@Entity
-@Table(name = "usuarios")
+import java.time.LocalDate;
+
 public class Usuario {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false)
-    private String nombre;
-
-    @Column(nullable = false, unique = true)
+    private String nombreUsuario;
     private String correo;
+    @JsonIgnore
+    private String contrasenaHash;
+    private String telefono;
+    private LocalDate fechaRegistro;
+    private String estado;
+    private Long rolId;
 
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(nullable = false)
-    private String password;
-
-    @ManyToOne
-    @JoinColumn(name = "rol_id", nullable = false)
-    private Rol rol;
-
-    public Usuario() {
-    }
-
-    public Usuario(String nombre, String correo, String password, Rol rol) {
-        this.nombre = nombre;
+    public Usuario(Long id, String nombreUsuario, String correo, String contrasenaHash,
+                   String telefono, LocalDate fechaRegistro, String estado, Long rolId) {
+        this.id = id;
+        this.nombreUsuario = nombreUsuario;
         this.correo = correo;
-        this.password = password;
-        this.rol = rol;
+        this.contrasenaHash = contrasenaHash;
+        this.telefono = telefono;
+        this.fechaRegistro = fechaRegistro;
+        this.estado = estado;
+        this.rolId = rolId;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public String getCorreo() {
-        return correo;
-    }
-
-    public void setCorreo(String correo) {
-        this.correo = correo;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public Rol getRol() {
-        return rol;
-    }
-
-    public void setRol(Rol rol) {
-        this.rol = rol;
-    }
+    public Long getId() { return id; }
+    public String getNombreUsuario() { return nombreUsuario; }
+    public String getCorreo() { return correo; }
+    public String getContrasenaHash() { return contrasenaHash; }
+    public String getTelefono() { return telefono; }
+    public LocalDate getFechaRegistro() { return fechaRegistro; }
+    public String getEstado() { return estado; }
+    public Long getRolId() { return rolId; }
 }

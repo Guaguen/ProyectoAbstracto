@@ -1,7 +1,9 @@
 package com.example.proyectobd2.controllers;
 
+import com.example.proyectobd2.dto.CreateUsuarioRequest;
 import com.example.proyectobd2.models.Usuario;
 import com.example.proyectobd2.services.UsuarioService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,18 +26,13 @@ public class UsuarioController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Usuario> obtenerPorId(@PathVariable Long id) {
-        return usuarioService.obtenerPorId(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Usuario usuario = usuarioService.obtenerPorId(id);
+        if (usuario == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(usuario);
     }
 
     @PostMapping
-    public Usuario guardar(@RequestBody Usuario usuario) {
-        return usuarioService.guardar(usuario);
-    }
-
-    @DeleteMapping("/{id}")
-    public void eliminar(@PathVariable Long id) {
-        usuarioService.eliminar(id);
+    public ResponseEntity<Usuario> crear(@RequestBody CreateUsuarioRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.crear(request));
     }
 }
