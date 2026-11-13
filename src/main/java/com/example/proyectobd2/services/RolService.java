@@ -1,35 +1,35 @@
-
 package com.example.proyectobd2.services;
 
+import com.example.proyectobd2.dto.CreateRolRequest;
 import com.example.proyectobd2.models.Rol;
-import com.example.proyectobd2.repositories.RolRepository;
+import com.example.proyectobd2.structures.LinkedList;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class RolService {
 
-    private final RolRepository rolRepository;
+    private final LinkedList<Rol> roles = new LinkedList<>();
+    private Long siguienteId = 1L;
 
-    public RolService(RolRepository rolRepository) {
-        this.rolRepository = rolRepository;
+    public RolService() {
+        roles.add(new Rol(siguienteId++, "Administrador", "Gestiona todo el sistema", "activo"));
+        roles.add(new Rol(siguienteId++, "Tecnico", "Atiende y repara reportes", "activo"));
+        roles.add(new Rol(siguienteId++, "Ciudadano", "Registra reportes y consulta abastecimiento", "activo"));
     }
 
     public List<Rol> obtenerTodos() {
-        return rolRepository.findAll();
+        return roles.toList();
     }
 
-    public Optional<Rol> obtenerPorId(Long id) {
-        return rolRepository.findById(id);
+    public Rol obtenerPorId(Long id) {
+        return roles.find(r -> r.getId().equals(id));
     }
 
-    public Rol guardar(Rol rol) {
-        return rolRepository.save(rol);
-    }
-
-    public void eliminar(Long id) {
-        rolRepository.deleteById(id);
+    public Rol crear(CreateRolRequest request) {
+        Rol rol = new Rol(siguienteId++, request.nombreRol(), request.descripcion(), request.estado());
+        roles.add(rol);
+        return rol;
     }
 }

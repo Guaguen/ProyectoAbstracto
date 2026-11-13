@@ -1,7 +1,9 @@
 package com.example.proyectobd2.controllers;
 
+import com.example.proyectobd2.dto.CreateRolRequest;
 import com.example.proyectobd2.models.Rol;
 import com.example.proyectobd2.services.RolService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,18 +26,13 @@ public class RolController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Rol> obtenerPorId(@PathVariable Long id) {
-        return rolService.obtenerPorId(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Rol rol = rolService.obtenerPorId(id);
+        if (rol == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(rol);
     }
 
     @PostMapping
-    public Rol guardar(@RequestBody Rol rol) {
-        return rolService.guardar(rol);
-    }
-
-    @DeleteMapping("/{id}")
-    public void eliminar(@PathVariable Long id) {
-        rolService.eliminar(id);
+    public ResponseEntity<Rol> crear(@RequestBody CreateRolRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(rolService.crear(request));
     }
 }
