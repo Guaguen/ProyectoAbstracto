@@ -5,6 +5,8 @@ import com.example.proyectobd2.models.Colonia;
 import com.example.proyectobd2.structures.LinkedList;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ColoniaService {
 
@@ -27,8 +29,8 @@ public class ColoniaService {
         ));
     }
 
-    public LinkedList<Colonia> obtenerTodas() {
-        return colonias;
+    public List<Colonia> obtenerTodas() {
+        return colonias.toList();
     }
 
     public Colonia obtenerPorId(Long id) {
