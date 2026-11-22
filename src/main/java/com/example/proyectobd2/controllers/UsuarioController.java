@@ -1,7 +1,7 @@
 package com.example.proyectobd2.controllers;
 
 import com.example.proyectobd2.dto.CreateUsuarioRequest;
-import com.example.proyectobd2.models.Usuario;
+import com.example.proyectobd2.models.UsuarioMemoria;
 import com.example.proyectobd2.services.UsuarioService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,19 +20,19 @@ public class UsuarioController {
     }
 
     @GetMapping
-    public List<Usuario> obtenerTodos() {
+    public List<UsuarioMemoria> obtenerTodos() {
         return usuarioService.obtenerTodos();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Usuario> obtenerPorId(@PathVariable Long id) {
-        Usuario usuario = usuarioService.obtenerPorId(id);
+    public ResponseEntity<UsuarioMemoria> obtenerPorId(@PathVariable Long id) {
+        UsuarioMemoria usuario = usuarioService.obtenerPorId(id);
         if (usuario == null) return ResponseEntity.notFound().build();
         return ResponseEntity.ok(usuario);
     }
 
     @PostMapping
-    public ResponseEntity<Usuario> crear(@RequestBody CreateUsuarioRequest request) {
+    public ResponseEntity<UsuarioMemoria> crear(@RequestBody CreateUsuarioRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.crear(request));
     }
 }
