@@ -2,6 +2,8 @@ package com.example.proyectobd2.controllers;
 
 import com.example.proyectobd2.dto.CreateDepositoRequest;
 import com.example.proyectobd2.models.Deposito;
+import com.example.proyectobd2.security.RequiereRol;
+import com.example.proyectobd2.security.Roles;
 import com.example.proyectobd2.services.DepositoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,11 +22,13 @@ public class DepositoController {
     }
 
     @GetMapping
+    @RequiereRol({Roles.ADMIN, Roles.TECNICO})
     public List<Deposito> obtenerTodos() {
         return depositoService.obtenerTodos();
     }
 
     @GetMapping("/{id}")
+    @RequiereRol({Roles.ADMIN, Roles.TECNICO})
     public ResponseEntity<Deposito> obtenerPorId(@PathVariable Long id) {
         Deposito deposito = depositoService.obtenerPorId(id);
         if (deposito == null) return ResponseEntity.notFound().build();
@@ -32,8 +36,8 @@ public class DepositoController {
     }
 
     @PostMapping
+    @RequiereRol({Roles.ADMIN, Roles.TECNICO})
     public ResponseEntity<Deposito> crear(@RequestBody CreateDepositoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(depositoService.crear(request));
     }
 }
-
